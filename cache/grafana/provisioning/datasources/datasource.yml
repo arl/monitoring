@@ -1,0 +1,16 @@
+# config file version
+apiVersion: 1
+
+datasources:
+- name: prom
+  type: prometheus
+  access: proxy
+  orgId: 1
+  url: http://prometheus:9090
+  isDefault: true
+  jsonData:
+     timeInterval: "5s"
+     queryTimeout: "3s"
+     httpMethod: "GET"
+  version: 1
+  editable: true

@@ -1,0 +1,31 @@
+version: '3.5'
+
+services:
+  app:
+    image: golab2019:latest
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGNUP=false
+    depends_on:
+      - prometheus
+    restart: always
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+
