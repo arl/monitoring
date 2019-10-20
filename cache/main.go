@@ -49,7 +49,7 @@ func (s *server) handleGet(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) serve(addr string) error {
 	log.Println("server starting:", addr)
-	return http.ListenAndServe(":8080", s.mux)
+	return http.ListenAndServe(addr, s.mux)
 }
 
 func (s *server) setupRoutes() {
