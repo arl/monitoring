@@ -133,6 +133,7 @@ func (m *mandelbrot) renderAnimatedGif(w io.Writer) {
 
 	log.Printf("Rendering %d frames", m.nframes)
 
+	// Decide the bounds of each frame by applying a zoom
 	bounds := make([]rect, m.nframes)
 	bounds[0] = m.bounds
 	for i := 1; i < m.nframes; i++ {
@@ -140,6 +141,7 @@ func (m *mandelbrot) renderAnimatedGif(w io.Writer) {
 		bounds[i].zoom(real(m.zoomPt), imag(m.zoomPt), m.zoomLevel)
 	}
 
+	// Render all the frames of the animation
 	for i := 0; i < m.nframes; i++ {
 		img := image.NewPaletted(image.Rect(0, 0, m.width, m.height), gopalette.Plan9)
 		m.renderFrame(bounds[i], img)
