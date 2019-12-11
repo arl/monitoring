@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"sync"
 
 	"gonum.org/v1/plot/palette"
 )
@@ -141,12 +142,20 @@ func (m *mandelbrot) renderAnimatedGif(w io.Writer) {
 		bounds[i].zoom(real(m.zoomPt), imag(m.zoomPt), m.zoomLevel)
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(m.nframes)
+
 	// Render all the frames of the animation
 	for i := 0; i < m.nframes; i++ {
-		img := image.NewPaletted(image.Rect(0, 0, m.width, m.height), gopalette.Plan9)
-		m.renderFrame(bounds[i], img)
-		images[i] = img
+		go func(i int) {
+			defer wg.Done()
+
+			img := image.NewPaletted(image.Rect(0, 0, m.width, m.height), gopalette.Plan9)
+			m.renderFrame(bounds[i], img)
+			images[i] = img
+		}(i)
 	}
+	wg.Wait()
 
 	log.Println("Encoding to GIF")
 
