@@ -1,8 +1,11 @@
 version: '3.5'
 
+
+# docker build .
+# docker-compose build
 services:
   app:
-    image: golab2019:latest
+    image: monitoring:latest
     build: .
     volumes:
       - .:/app
