@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type server struct {
@@ -52,10 +56,29 @@ func (s *server) serve(addr string) error {
 	return http.ListenAndServe(addr, s.mux)
 }
 
-func (s *server) setupRoutes() {
-	s.mux.HandleFunc("/add", s.handleAdd)
-	s.mux.HandleFunc("/get", s.handleGet)
+func countRequest(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		totalRequests.Inc()
+		h(w, r)
+	}
 }
+
+// IMPORT
+// 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+func (s *server) setupRoutes() {
+	s.mux.HandleFunc("/add", countRequest(s.handleAdd))
+	s.mux.HandleFunc("/get", countRequest(s.handleGet))
+	s.mux.Handle("/metrics", promhttp.Handler())
+}
+
+var (
+	totalRequests = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "cache_requests_total",
+			Help: "The total number of requests",
+		})
+)
 
 func main() {
 	addr := flag.String("addr", ":8080", "server listen address")
