@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"runtime/trace"
 )
 
 func check(err error) {
@@ -12,7 +13,18 @@ func check(err error) {
 	}
 }
 
+// GO111MODULE=off go build .
+// go get gonum.org/.../palette
+
 func main() {
+	tracef, err := os.Create("trace.out")
+	check(err)
+	defer tracef.Close()
+
+	err = trace.Start(tracef)
+	check(err)
+	defer trace.Stop()
+
 	m := defaultCfg
 
 	nframes := flag.Int("frames", m.nframes, "number of frames in final animation")
