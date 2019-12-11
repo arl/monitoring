@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -59,10 +60,15 @@ func (s *server) serve(addr string) error {
 	return http.ListenAndServe(addr, s.mux)
 }
 
-func countRequest(h http.HandlerFunc) http.HandlerFunc {
+func recordMetrics(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		totalRequests.Inc()
+
+		// Measure taken by the handler h
+		t0 := time.Now()
 		h(w, r)
+		duration := time.Since(t0) / time.Microsecond
+		requestDuration.Observe(float64(duration))
 	}
 }
 
@@ -70,8 +76,8 @@ func countRequest(h http.HandlerFunc) http.HandlerFunc {
 // 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 func (s *server) setupRoutes() {
-	s.mux.HandleFunc("/add", countRequest(s.handleAdd))
-	s.mux.HandleFunc("/get", countRequest(s.handleGet))
+	s.mux.HandleFunc("/add", recordMetrics(s.handleAdd))
+	s.mux.HandleFunc("/get", recordMetrics(s.handleGet))
 	s.mux.Handle("/metrics", promhttp.Handler())
 }
 
@@ -92,6 +98,13 @@ var (
 		prometheus.CounterOpts{
 			Name: "cache_misses_total",
 			Help: "The total number of cache misses",
+		})
+
+	requestDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "request_duration_microseconds",
+			Help:    "The duration of requests",
+			Buckets: prometheus.LinearBuckets(0, 5, 20),
 		})
 )
 
