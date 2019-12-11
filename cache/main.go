@@ -46,6 +46,9 @@ func (s *server) handleGet(w http.ResponseWriter, r *http.Request) {
 	v, ok := s.cache.Get(k)
 	if !ok {
 		w.WriteHeader(http.StatusNoContent)
+		cacheMisses.Inc()
+	} else {
+		cacheHits.Inc()
 	}
 
 	fmt.Fprint(w, v)
@@ -77,6 +80,18 @@ var (
 		prometheus.CounterOpts{
 			Name: "cache_requests_total",
 			Help: "The total number of requests",
+		})
+
+	cacheHits = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "cache_hits_total",
+			Help: "The total number of cache hits",
+		})
+
+	cacheMisses = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "cache_misses_total",
+			Help: "The total number of cache misses",
 		})
 )
 
